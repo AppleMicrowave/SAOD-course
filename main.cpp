@@ -46,8 +46,6 @@ struct Vertex
 	Vertex(Node* value) : left(nullptr), right(nullptr), data(value), used(false), weight(0) {};
 };
 
-Vertex* Root = nullptr;
-
 
 void pushBack(Node*& head, Node* value)
 {
@@ -194,7 +192,8 @@ void bubbleSort(Node* indArr, int n)
 
 
 
-Queue* BinSearch(Node** head, char* key) {
+Queue* BinSearch(Node** head, char* key, int count) 
+{
 	Node** index = new Node * [N];
 	Node* current = *head;
 	int indexCount = 0;
@@ -224,13 +223,20 @@ Queue* BinSearch(Node** head, char* key) {
 		queue->head = nullptr;
 		queue->tail = nullptr;
 
-		while (temp != nullptr && strncmp(temp->street, key, 3) == 0) {
-			enqueue(queue, temp);
-			temp = temp->next;
+		while (temp != nullptr)
+		{
+			if (strncmp(temp->street, key, 3) == 0)
+			{
+				enqueue(queue, temp);
+				//count++;
+				temp = temp->next;
+			}
+			else {
+				temp = temp->next;
+			}
 		}
 		return queue;
 	}
-	cout << "There's nothin' to look at!";
 	return nullptr;
 }
 
@@ -260,7 +266,7 @@ Vertex* findMaxWeightUnused(Vertex** vertices, int n) {
 	return maxVertex;
 }
 
-void buildOptimalSearchTree(Node** vertices, int n) {
+void buildOptimalSearchTree(Node** vertices, int n, Vertex* root) {
 	Vertex** treeVertices = new Vertex * [n];
 
 	for (int i = 0; i < n; ++i) {
@@ -272,20 +278,19 @@ void buildOptimalSearchTree(Node** vertices, int n) {
 
 		if (maxWeightVertex != nullptr) {
 			maxWeightVertex->used = true;
-			addToTree(Root, maxWeightVertex->data);
+			addToTree(root, maxWeightVertex->data);
 		}
 	}
 
 	delete[] treeVertices;
 }
 
-// Функция для поиска элемента в дереве
 Node* searchInTree(Vertex* root, const char* key) {
 	while (root != nullptr) {
 		if (strcmp(key, root->data->street) == 0) {
 			return root->data;
 		}
-		else if (strcmp(key, root->data->street) < 0) {
+		else if (strcmp(key, root->data->street) != 0) {
 			root = root->left;
 		}
 		else {
@@ -295,11 +300,26 @@ Node* searchInTree(Vertex* root, const char* key) {
 	return nullptr;
 }
 
+void printInOrder(Vertex* root) {
+	if (root == nullptr) {
+		return;
+	}
+
+	printInOrder(root->left);
+	cout << "Street: " << root->data->street << ", Weight: " << root->weight << endl;
+	printInOrder(root->right);
+}
+
+void printOptimalSearchTree(Vertex* root) {
+	cout << "Optimal Search Tree:" << endl;
+	printInOrder(root);
+}
+
 void printList(List* list);
 
 void printPage(List* list, int number);
 
-void printMenu(List* list, List* copy, Node* temp_head);
+void printMenu(List* list, List* copy);
 
 
 int main(int argc, char* argv[])
@@ -334,8 +354,7 @@ int main(int argc, char* argv[])
 	}
 	fclose(fp);
 	
-	Node* temp_head = list_copy->head;
-	printMenu(list, list_copy, temp_head);
+	printMenu(list, list_copy);
 
 	return 0;
 }
@@ -416,7 +435,7 @@ void printPage(List* list, int number)
 	}
 }
 
-void printMenu(List* list, List* list_copy, Node* temp_head)
+void printMenu(List* list, List* list_copy)
 {
 	system("cls");
 
@@ -428,8 +447,7 @@ void printMenu(List* list, List* list_copy, Node* temp_head)
 	cout << "2 - Show specific page." << endl;
 	cout << "3 - Start the sort." << endl;
 	cout << "4 - Initialize key search" << endl;
-	cout << "5 - Build A1 Tree" << endl;
-	cout << "6 - Exit the programm." << endl;
+	cout << "5 - Exit the programm." << endl;
 	
 
 	cin >> answer;
@@ -446,7 +464,7 @@ void printMenu(List* list, List* list_copy, Node* temp_head)
 		if (choice == 1)
 		{
 			printList(list);
-			printMenu(list, list_copy, temp_head);
+			printMenu(list, list_copy);
 			break;
 		}
 		else if (choice == 2)
@@ -454,19 +472,19 @@ void printMenu(List* list, List* list_copy, Node* temp_head)
 			if (sortdetected == true)
 			{
 				printList(list_copy);
-				printMenu(list, list_copy, temp_head);
+				printMenu(list, list_copy);
 				break;
 			}
 			else
 			{
 				digitalSort(list_copy->head);
 				printList(list_copy);
-				printMenu(list, list_copy, temp_head);
+				printMenu(list, list_copy);
 				break;
 			}
 		}
 		printList(list);
-		printMenu(list, list_copy, temp_head);
+		printMenu(list, list_copy);
 		break;
 	}
 		
@@ -481,7 +499,7 @@ void printMenu(List* list, List* list_copy, Node* temp_head)
 		{
 			cout << "Error! Where is no page with this number." << endl;
 			system("pause");
-			printMenu(list, list_copy, temp_head);
+			printMenu(list, list_copy);
 			break;
 		}
 		choice = 0;
@@ -491,7 +509,7 @@ void printMenu(List* list, List* list_copy, Node* temp_head)
 		if (choice == 1)
 		{
 			printPage(list, number);
-			printMenu(list, list_copy, temp_head);
+			printMenu(list, list_copy);
 			break;
 		}
 		else if (choice == 2)
@@ -499,14 +517,14 @@ void printMenu(List* list, List* list_copy, Node* temp_head)
 			if (sortdetected == 1)
 			{
 				printPage(list_copy, number);
-				printMenu(list, list_copy, temp_head);
+				printMenu(list, list_copy);
 				break;
 			}
 			else
 			{
 				digitalSort(list_copy->head);
 				printPage(list_copy, number);
-				printMenu(list, list_copy, temp_head);
+				printMenu(list, list_copy);
 				break;
 			}
 		}
@@ -519,7 +537,7 @@ void printMenu(List* list, List* list_copy, Node* temp_head)
 		{
 			cout << "You can't sort list twice!" << endl;
 			system("pause");
-			printMenu(list, list_copy, temp_head);
+			printMenu(list, list_copy);
 			break;
 		}
 		else {
@@ -527,7 +545,7 @@ void printMenu(List* list, List* list_copy, Node* temp_head)
 			cout << "Sort complete!" << endl;
 
 			system("pause");
-			printMenu(list, list_copy, temp_head);
+			printMenu(list, list_copy);
 			break;
 		}	
 	case 4:
@@ -536,10 +554,32 @@ void printMenu(List* list, List* list_copy, Node* temp_head)
 			char key[4];
 			cout << "Enter the search key.." << endl;
 			cin >> key;
+
+			int queue_count = 0;
+
 			Queue* search = new Queue;
 			search->head = nullptr;
 			search->tail = nullptr;
- 			search = BinSearch(&list_copy->head, key);
+ 			search = BinSearch(&list_copy->head, key, queue_count);
+			if (search->head == nullptr)
+			{
+				cout << "There's nothin to look at!" << endl;
+				system("pause");
+				printMenu(list, list_copy);
+				break;
+			}
+			Node** IAFT = new Node*[queue_count];
+			Node* current = new Node(*search->head);
+			Vertex* Root = nullptr;
+			int index = 0;
+			
+			while (current != nullptr && index < queue_count)
+			{
+				IAFT[index] = current;
+				current = current->next;
+				index++;
+			}
+
 			while (search->head != nullptr)
 			{
 				cout <<
@@ -551,23 +591,24 @@ void printMenu(List* list, List* list_copy, Node* temp_head)
 				popQ(*search);
 			}
 			delete search;
+			buildOptimalSearchTree(IAFT, queue_count, Root);
+			system("pause");
+			system("cls");
+			Node* foundNode = searchInTree(Root, key);
+			if (foundNode != nullptr) {
+				printInOrder(Root);
+			}
+			else {
+				cout << "There's nothin in da tree" << endl;
+			}
+			system("pause");
 		}
 		system("pause");
-		printMenu(list, list_copy, temp_head);
+		printMenu(list, list_copy);
 		break;
-	case 5:
-		//buildOptimalSearchTree(/* передайте массив вершин и их количество */);
+		
 
-		//// Пример поиска элемента в дереве по ключу
-		//const char* searchKey = "example_key";
-		//Node* foundNode = searchInTree(Root, searchKey);
-		//if (foundNode != nullptr) {
-		//	// Найденный элемент найденNode
-		//}
-		//else {
-		//	// Элемент не найден
-		//}
-	case 6:
+	case 5:
 		system("cls");
 
 		cout << "Exiting the programm.." << endl;
@@ -575,7 +616,7 @@ void printMenu(List* list, List* list_copy, Node* temp_head)
 		break;
 	default:
 
-		printMenu(list, list_copy, temp_head);
+		printMenu(list, list_copy);
 
 		break;
 	}
