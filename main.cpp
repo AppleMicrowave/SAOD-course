@@ -7,7 +7,6 @@ using namespace std;
 #define N 4000
 
 bool sortdetected;
-int queuecount;
 
 struct Node
 {
@@ -36,6 +35,19 @@ struct Queue
 	Node* head;
 	Node* tail;
 };
+
+struct Vertex 
+{
+	Vertex* left;
+	Vertex* right;
+	Node* data;
+	bool used;
+	int weight;
+	Vertex(Node* value) : left(nullptr), right(nullptr), data(value), used(false), weight(0) {};
+};
+
+Vertex* Root = nullptr;
+
 
 void pushBack(Node*& head, Node* value)
 {
@@ -180,8 +192,9 @@ void bubbleSort(Node* indArr, int n)
 			}
 }
 
+
+
 Queue* BinSearch(Node** head, char* key) {
-	queuecount = 0;
 	Node** index = new Node * [N];
 	Node* current = *head;
 	int indexCount = 0;
@@ -213,17 +226,74 @@ Queue* BinSearch(Node** head, char* key) {
 
 		while (temp != nullptr && strncmp(temp->street, key, 3) == 0) {
 			enqueue(queue, temp);
-			queuecount++;
 			temp = temp->next;
 		}
 		return queue;
 	}
+	cout << "There's nothin' to look at!";
+	return nullptr;
+}
+
+void addToTree(Vertex*& root, Node* value) {
+	if (root == nullptr) {
+		root = new Vertex(value);
+	}
+	else if (strcmp(value->street, root->data->street) < 0) {
+		addToTree(root->left, value);
+	}
 	else {
-		return nullptr;
+		addToTree(root->right, value);
 	}
 }
 
+Vertex* findMaxWeightUnused(Vertex** vertices, int n) {
+	int maxWeight = 0;
+	Vertex* maxVertex = nullptr;
 
+	for (int i = 0; i < n; ++i) {
+		if (!vertices[i]->used && vertices[i]->weight > maxWeight) {
+			maxWeight = vertices[i]->weight;
+			maxVertex = vertices[i];
+		}
+	}
+
+	return maxVertex;
+}
+
+void buildOptimalSearchTree(Node** vertices, int n) {
+	Vertex** treeVertices = new Vertex * [n];
+
+	for (int i = 0; i < n; ++i) {
+		treeVertices[i] = new Vertex(vertices[i]);
+	}
+
+	for (int i = 0; i < n; ++i) {
+		Vertex* maxWeightVertex = findMaxWeightUnused(treeVertices, n);
+
+		if (maxWeightVertex != nullptr) {
+			maxWeightVertex->used = true;
+			addToTree(Root, maxWeightVertex->data);
+		}
+	}
+
+	delete[] treeVertices;
+}
+
+// Функция для поиска элемента в дереве
+Node* searchInTree(Vertex* root, const char* key) {
+	while (root != nullptr) {
+		if (strcmp(key, root->data->street) == 0) {
+			return root->data;
+		}
+		else if (strcmp(key, root->data->street) < 0) {
+			root = root->left;
+		}
+		else {
+			root = root->right;
+		}
+	}
+	return nullptr;
+}
 
 void printList(List* list);
 
@@ -358,7 +428,8 @@ void printMenu(List* list, List* list_copy, Node* temp_head)
 	cout << "2 - Show specific page." << endl;
 	cout << "3 - Start the sort." << endl;
 	cout << "4 - Initialize key search" << endl;
-	cout << "5 - Exit the programm." << endl;
+	cout << "5 - Build A1 Tree" << endl;
+	cout << "6 - Exit the programm." << endl;
 	
 
 	cin >> answer;
@@ -479,13 +550,24 @@ void printMenu(List* list, List* list_copy, Node* temp_head)
 					search->head->date << endl;
 				popQ(*search);
 			}
-			cout << queuecount;
 			delete search;
 		}
 		system("pause");
 		printMenu(list, list_copy, temp_head);
 		break;
 	case 5:
+		//buildOptimalSearchTree(/* передайте массив вершин и их количество */);
+
+		//// Пример поиска элемента в дереве по ключу
+		//const char* searchKey = "example_key";
+		//Node* foundNode = searchInTree(Root, searchKey);
+		//if (foundNode != nullptr) {
+		//	// Найденный элемент найденNode
+		//}
+		//else {
+		//	// Элемент не найден
+		//}
+	case 6:
 		system("cls");
 
 		cout << "Exiting the programm.." << endl;
