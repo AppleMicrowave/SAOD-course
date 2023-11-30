@@ -44,10 +44,12 @@ struct Vertex
 	Vertex* right;
 	Vertex* next;
 	Node* data;
-	int balance;
 	int weight;
+	int balance;
+
 };
 
+Vertex* Root = nullptr;
 
 void pushBack(Node*& head, Node* value)
 {
@@ -204,7 +206,6 @@ void intBubbleSort(int* arr, int n)
 }
 
 
-
 Queue* BinSearch(Node** head, char* key) 
 {
 	Node** index = new Node * [N];
@@ -253,120 +254,68 @@ Queue* BinSearch(Node** head, char* key)
 	return nullptr;
 }
 
-void TreeSearch(Vertex* p, char* key) {
-	if (p != NULL)
-	{
-		if (strcmp(p->data->street, key) < 0) 
-		{
-			TreeSearch(p->left, key);
-		}
-		else {
-			if (strcmp(p->data->street, key) > 0) {
-				TreeSearch(p->right, key);
-			}
-			else {
-				cout << "Person if found!: " << " " << p->data->name_info << "  " << p->data->street << "  " << p->data->house_num << "  " << p->data->room_num << "  " << p->data->date << endl;
-				TreeSearch(p->next, key);
-			}
-		}
+void PrintTree(Vertex* p) {
+	if (p != nullptr) {
+		PrintTree(p->left);
+		cout << p->data->name_info << "\t"
+			<< p->data->street << "\t\t"
+			<< p->data->house_num << "\t"
+			<< p->data->room_num << "\t"
+			<< p->data->date << endl;
+		PrintTree(p->right);
 	}
 }
 
-void dop_a1(Vertex*& point, Node* data, int weight) 
-{
-	if (point == nullptr) {
-		point = new Vertex;
-		point->left = nullptr;
-		point->right = nullptr;
-		point->data = data;
-		point->next = nullptr;
-		point->balance = 0;
-		point->weight = weight;
-	}
-	else if (data->house_num == point->data->house_num) 
+void SearchTree(Vertex* p, Node* data) {
+	if (p != NULL)
 	{
-		dop_a1(point->next, data, weight);
-	}
-	else if (data->house_num < point->data->house_num) 
-	{
-		dop_a1(point->left, data, weight);
-	}
-	else if (data->house_num > point->data->house_num) 
-	{
-		dop_a1(point->right, data, weight);
+		if (p->data->house_num == data->house_num) {
+			cout <<
+				p->data->name_info << "\t" <<
+				p->data->street << "\t" <<
+				p->data->house_num << "\t" <<
+				p->data->room_num << "\t" << 
+				p->data->date << endl;
+			SearchTree(p->next, data);
+		}
+		else if (p->data->house_num < data->house_num) {
+			SearchTree(p->left, data);
+		}
+		else if (p->data->house_num > data->house_num) {
+			SearchTree(p->right, data);
+		}
 	}
 }
 
 void delete_tree(Vertex*& p) {
 	if (p != NULL) {
 		delete_tree(p->left);
+		delete_tree(p->next);
 		delete_tree(p->right);
 		delete p;
 	}
 }
 
-void LRprint(Vertex* x) {
-	if (x) {
-		LRprint(x->left);
-		cout <<
-			x->data->name_info << "\t" <<
-			x->data->street << "\t" <<
-			x->data->house_num << "\t" <<
-			x->data->room_num << "\t" <<
-			x->data->date << endl;
-		LRprint(x->next);
-		LRprint(x->right);
-	}
-}
-int size(Vertex* x)
-{
-	if (x == NULL) {
-		return 0;
+void A1(Vertex*& p, Node* data, int w) {
+	if (p == nullptr) {
+		p = new Vertex;
+		p->data = data;
+		p->weight = w;
+		p->left = nullptr;
+		p->right = nullptr;
+		p->next = nullptr;
 	}
 	else {
-		return 1 + size(x->left) + size(x->right);
+		if (p->data->house_num == data->house_num) {
+			A1(p->next, data, w);
+		}
+		else if (p->data->house_num > data->house_num) {
+			A1(p->right, data, w);
+		}
+		else if (p->data->house_num < data->house_num) {
+			A1(p->left, data, w);
+		}
 	}
-}
-
-int height(Vertex* x)
-{
-	if (x == NULL) {
-		return 0;
-	}
-	else {
-		return 1 + max(height(x->left), height(x->right));
-	}
-}
-
-int sdp(Vertex* x, int l)
-{
-	if (x == NULL) {
-		return 0;
-	}
-	else {
-		return l + sdp(x->left, l + 1) + sdp(x->right, l + 1);
-	}
-}
-
-int Max(int x, int y)
-{
-	if (x > y) return x;
-	return y;
-}
-
-void printInOrder(Vertex* root) {
-	if (root == nullptr) {
-		return;
-	}
-
-	printInOrder(root->left);
-	cout << "Street: " << root->data->street << ", Weight: " << root->weight << endl;
-	printInOrder(root->right);
-}
-
-void printOptimalSearchTree(Vertex* root) {
-	cout << "Optimal Search Tree:" << endl;
-	printInOrder(root);
 }
 
 void printList(List* list);
@@ -620,30 +569,28 @@ void printMenu(List* list, List* list_copy)
 				printMenu(list, list_copy);
 				break;
 			}
-			Node** IAFT = new Node*[queue_count];
-			for (int i = 0; i < queue_count; i++)
-			{
-				IAFT[i] = new Node;
-			}
+			Node* IAFT = new Node[queue_count];
 			Node* current = new Node(*search->head);
-			Vertex* Root = nullptr;
 			int index = 0;
 
 			int* arr_random = new int[queue_count];
 			for (int i = 0; i < queue_count; i++) {
 				arr_random[i] = rand() % 100;
 			}
+			//intBubbleSort(arr_random, queue_count);
+			if (Root != nullptr)
+			{
+				delete_tree(Root);
+				Root = nullptr;
+			}
 
 			while (current != nullptr && index < queue_count)
 			{
-				IAFT[index] = current;
-				dop_a1(Root, IAFT[index], arr_random[index]);
+				IAFT[index] = *current;
+				A1(Root, &IAFT[index], arr_random[index]);
 				current = current->next;
 				index++;
-			}
-
-			
-			intBubbleSort(arr_random, queue_count);
+			}	
 
 			while (search->head != nullptr)
 			{
@@ -657,7 +604,7 @@ void printMenu(List* list, List* list_copy)
 			}
 			system("pause");
 			system("cls");
-			LRprint(Root);
+			PrintTree(Root);
 		}
 		system("pause");
 		printMenu(list, list_copy);
