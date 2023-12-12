@@ -22,6 +22,8 @@ struct Node
 	Node* next;
 };
 
+Node** index = new Node* [N];
+
 struct List 
 {
 	Node* data;
@@ -46,11 +48,10 @@ struct Vertex
 	Node* data;
 	int weight;
 	int balance;
-
-};
-
+};	
 Vertex* Root = nullptr;
 
+//List
 void pushBack(Node*& head, Node* value)
 {
 	Node* newNode = new Node(*value);
@@ -69,6 +70,7 @@ void pushBack(Node*& head, Node* value)
 	temp->next = newNode;
 }
 
+//Queue
 void enqueue(Queue*& queue, Node* value) 
 {
 	Node* newNode = new Node(*value);
@@ -88,7 +90,7 @@ void popQ(Queue& queue)
 { 
 	if (queue.head == nullptr)
 	{
-		cout << "Очередь пуста" << endl;
+		cout << "Queue is empty!" << endl;
 		return;
 	}
 
@@ -103,6 +105,7 @@ void popQ(Queue& queue)
 
 }
 
+//Sort
 void digitalSort(Node*& head)
 {
 	Queue Q[256]{};
@@ -205,7 +208,7 @@ void intBubbleSort(int* arr, int n)
 			}
 }
 
-
+//Binary Search
 Queue* BinSearch(Node** head, char* key) 
 {
 	Node** index = new Node * [N];
@@ -254,49 +257,47 @@ Queue* BinSearch(Node** head, char* key)
 	return nullptr;
 }
 
+//Tree
 void PrintTree(Vertex* p) {
 	if (p != nullptr) {
 		PrintTree(p->left);
 		cout << p->data->name_info << "\t"
-			<< p->data->street << "\t\t"
+			<< p->data->street << "\t"
 			<< p->data->house_num << "\t"
 			<< p->data->room_num << "\t"
 			<< p->data->date << endl;
+		PrintTree(p->next);
 		PrintTree(p->right);
 	}
 }
 
-void SearchTree(Vertex* p, Node* data) {
-	if (p != NULL)
-	{
-		if (p->data->house_num == data->house_num) {
+void SearchTree(Vertex* p, short int data) {
+	if (p != nullptr) {
+		SearchTree(p->left, data);
+
+		if (p->data->room_num == data) {
 			cout <<
 				p->data->name_info << "\t" <<
 				p->data->street << "\t" <<
 				p->data->house_num << "\t" <<
-				p->data->room_num << "\t" << 
+				p->data->room_num << "\t" <<
 				p->data->date << endl;
-			SearchTree(p->next, data);
 		}
-		else if (p->data->house_num < data->house_num) {
-			SearchTree(p->left, data);
-		}
-		else if (p->data->house_num > data->house_num) {
-			SearchTree(p->right, data);
-		}
+
+		SearchTree(p->next, data);
+		SearchTree(p->right, data);
 	}
 }
 
 void delete_tree(Vertex*& p) {
 	if (p != NULL) {
 		delete_tree(p->left);
-		delete_tree(p->next);
 		delete_tree(p->right);
 		delete p;
 	}
 }
 
-void A1(Vertex*& p, Node* data, int w) {
+void add_tree(Vertex*& p, Node* data, int w) {
 	if (p == nullptr) {
 		p = new Vertex;
 		p->data = data;
@@ -305,18 +306,19 @@ void A1(Vertex*& p, Node* data, int w) {
 		p->right = nullptr;
 		p->next = nullptr;
 	}
-	else {
-		if (p->data->house_num == data->house_num) {
-			A1(p->next, data, w);
+	else if (strncmp(p->data->name_info, data->name_info, 10) < 0) {
+		add_tree(p->right, data, w);
 		}
-		else if (p->data->house_num > data->house_num) {
-			A1(p->right, data, w);
-		}
-		else if (p->data->house_num < data->house_num) {
-			A1(p->left, data, w);
-		}
+	else if (strncmp(p->data->name_info, data->name_info, 10) > 0) {
+		add_tree(p->left, data, w);
+	}
+	else if (strncmp(p->data->name_info, data->name_info, 10) == 0) {
+		add_tree(p->next, data, w);
 	}
 }
+
+//Coding
+
 
 void printList(List* list);
 
@@ -449,8 +451,9 @@ void printMenu(List* list, List* list_copy)
 	cout << "1 - Show all database." << endl;
 	cout << "2 - Show specific page." << endl;
 	cout << "3 - Start the sort." << endl;
-	cout << "4 - Initialize key search" << endl;
-	cout << "5 - Exit the programm." << endl;
+	cout << "4 - Initialize key search." << endl;
+	cout << "5 - Procedure Coding." << endl;
+	cout << "6 - Exit the programm." << endl;
 	
 
 	cin >> answer;
@@ -555,13 +558,17 @@ void printMenu(List* list, List* list_copy)
 		system("cls");
 		{
 			char key[4];
+			int intkey = 0;
+			int i = 0;
 			cout << "Enter the search key.." << endl;
 			cin >> key;
 
+			queue_count = 0;
 			Queue* search = new Queue;
 			search->head = nullptr;
 			search->tail = nullptr;
  			search = BinSearch(&list_copy->head, key);
+
 			if (search->head == nullptr)
 			{
 				cout << "There's nothin to look at!" << endl;
@@ -569,28 +576,31 @@ void printMenu(List* list, List* list_copy)
 				printMenu(list, list_copy);
 				break;
 			}
-			Node* IAFT = new Node[queue_count];
-			Node* current = new Node(*search->head);
-			int index = 0;
 
-			int* arr_random = new int[queue_count];
-			for (int i = 0; i < queue_count; i++) {
-				arr_random[i] = rand() % 100;
+			Node* arr = new Node[queue_count];
+			Node* current = new Node(*search->head);
+
+			int* Weight = new int[queue_count];
+
+			for (i = 0; i < queue_count; i++) {
+				Weight[i] = rand() % 99 + 1;
 			}
-			//intBubbleSort(arr_random, queue_count);
+			i = 0;
+
+			intBubbleSort(Weight, queue_count);
+
 			if (Root != nullptr)
 			{
 				delete_tree(Root);
 				Root = nullptr;
 			}
 
-			while (current != nullptr && index < queue_count)
+			for (i = 0; i < queue_count; i++)
 			{
-				IAFT[index] = *current;
-				A1(Root, &IAFT[index], arr_random[index]);
+				arr[i] = *current;
+				add_tree(Root, &arr[i], Weight[i]);
 				current = current->next;
-				index++;
-			}	
+			}
 
 			while (search->head != nullptr)
 			{
@@ -604,14 +614,23 @@ void printMenu(List* list, List* list_copy)
 			}
 			system("pause");
 			system("cls");
+
 			PrintTree(Root);
+
+			system("pause");
+			system("cls");
+
+			cout << "Enter room number to search: ";
+			cin >> intkey;
+			SearchTree(Root, intkey);
 		}
 		system("pause");
 		printMenu(list, list_copy);
 		break;
-		
-
 	case 5:
+
+
+	case 6:
 		system("cls");
 
 		cout << "Exiting the programm.." << endl;
