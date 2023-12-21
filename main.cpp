@@ -6,7 +6,8 @@ using namespace std;
 
 #define N 4000
 
-bool sortdetected;
+bool sortdetected, flag;
+const int m = 256;
 
 struct Node
 {
@@ -21,7 +22,6 @@ struct Node
 	
 	Node* next;
 };
-
 Node** index = new Node* [N];
 
 struct List 
@@ -37,7 +37,6 @@ struct Queue
 	Node* head;
 	Node* tail;
 };
-
 int queue_count = 0;
 
 struct Vertex 
@@ -50,6 +49,15 @@ struct Vertex
 	int balance;
 };	
 Vertex* Root = nullptr;
+
+struct Symbol {
+	double probability;
+	double cumulative_probability;
+	int code_length;
+	int code[m];
+	char symbol;
+};
+
 
 //List
 void pushBack(Node*& head, Node* value)
@@ -271,11 +279,11 @@ void PrintTree(Vertex* p) {
 	}
 }
 
-void SearchTree(Vertex* p, short int data) {
+void SearchTree(Vertex* p, char* data) {
 	if (p != nullptr) {
 		SearchTree(p->left, data);
 
-		if (p->data->room_num == data) {
+		if (strncmp(p->data->name_info, data, 3) == 0) {
 			cout <<
 				p->data->name_info << "\t" <<
 				p->data->street << "\t" <<
@@ -318,8 +326,93 @@ void add_tree(Vertex*& p, Node* data, int w) {
 }
 
 //Coding
+void insertionSortForCoding(Symbol* symbols, int alphabet_size) {
+	int i, j;
+	Symbol key;
+	for (i = 1; i < alphabet_size; i++) {
+		key = symbols[i];
+		j = i - 1;
+		while (j >= 0 && symbols[j].probability < key.probability) {
+			symbols[j + 1] = symbols[j];
+			j = j - 1;
+		}
+		symbols[j + 1] = key;
+	}
+}
 
+void gilbertMooreCoding(Symbol* symbols, int alphabet_size) {
+	double pr = 0;
+	for (int i = 0; i < alphabet_size; ++i) {
+		symbols[i].cumulative_probability = pr + symbols[i].probability / 2;
+		pr += symbols[i].probability;
+		symbols[i].code_length = -log2(symbols[i].probability) + 1;
+		for (int j = 0; j < symbols[i].code_length; ++j) {
+			symbols[i].cumulative_probability *= 2;
+			symbols[i].code[j] = (int)symbols[i].cumulative_probability;
+			if (symbols[i].cumulative_probability > 1) {
+				symbols[i].cumulative_probability -= 1;
+			}
+		}
+	}
+}
 
+void calculateEntropyAndAverageCodeLength(Symbol* symbols, int alphabet_size) {
+	double entropy = 0;
+	double average_code_length = 0;
+	for (int i = 0; i < alphabet_size; ++i) {
+		entropy -= symbols[i].probability * log2(symbols[i].probability);
+		average_code_length += symbols[i].code_length * symbols[i].probability;
+	}
+	printf("Entropy: %f\n", entropy);
+	printf("Average code length: %f\n\n", average_code_length);
+}
+
+void codingInteraction() {
+	SetConsoleCP(866);
+	FILE* file = NULL;
+	fopen_s(&file, "base.dat", "rb");
+	system("cls");
+	if (file == NULL) {
+		printf("Cannot open the file!\n");
+		system("pause");
+		return;
+	}
+	int frequencies[m] = { 0 };
+	int total = 0;
+	char ch;
+	while (fread(&ch, sizeof(char), 1, file)) {
+		frequencies[(unsigned char)ch]++;
+		total++;
+	}
+	fclose(file);
+	Symbol symbols[m];
+	int alphabet_size = 0;
+	for (int i = 0; i < m; ++i) {
+		if (frequencies[i] > 0) {
+			symbols[alphabet_size].symbol = (char)i;
+			symbols[alphabet_size].probability = (double)frequencies[i] / total;
+			alphabet_size++;
+		}
+	}
+	insertionSortForCoding(symbols, alphabet_size);
+	gilbertMooreCoding(symbols, alphabet_size);
+
+	printf("-A------P---------------L-------Codeword-----Frequency\n");
+	for (int i = 0; i < alphabet_size; ++i) {
+		printf(" [%c]\t", symbols[i].symbol);
+		printf("%f\t", symbols[i].probability);
+		printf("%i\t", symbols[i].code_length);
+		for (int j = 0; j < symbols[i].code_length; ++j) {
+			printf("%d", symbols[i].code[j]);
+		}
+		printf("\t%d\n", frequencies[(unsigned char)symbols[i].symbol]);
+	}
+	printf("---------------------------------------------\n");
+
+	calculateEntropyAndAverageCodeLength(symbols, alphabet_size);
+}
+
+//Menu
 void printList(List* list);
 
 void printPage(List* list, int number);
@@ -445,15 +538,16 @@ void printMenu(List* list, List* list_copy)
 	system("cls");
 
 	int answer, choice;
-	
+	char key[4];
 
 	cout << "Choose the option: " << endl << endl;
 	cout << "1 - Show all database." << endl;
 	cout << "2 - Show specific page." << endl;
 	cout << "3 - Start the sort." << endl;
 	cout << "4 - Initialize key search." << endl;
-	cout << "5 - Procedure Coding." << endl;
-	cout << "6 - Exit the programm." << endl;
+	cout << "5 - Initizlize tree search." << endl;
+	cout << "6 - Procedure Coding." << endl;
+	cout << "7 - Exit the programm." << endl;
 	
 
 	cin >> answer;
@@ -557,7 +651,7 @@ void printMenu(List* list, List* list_copy)
 	case 4:
 		system("cls");
 		{
-			char key[4];
+			
 			int intkey = 0;
 			int i = 0;
 			cout << "Enter the search key.." << endl;
@@ -601,7 +695,8 @@ void printMenu(List* list, List* list_copy)
 				add_tree(Root, &arr[i], Weight[i]);
 				current = current->next;
 			}
-
+			flag = true;
+			cout << "\tName info\t\t" << "  Street\t\t" << "House\t" << "Room\t" << "  Date" << endl << endl;
 			while (search->head != nullptr)
 			{
 				cout <<
@@ -612,25 +707,37 @@ void printMenu(List* list, List* list_copy)
 					search->head->date << endl;
 				popQ(*search);
 			}
-			system("pause");
-			system("cls");
-
-			PrintTree(Root);
-
-			system("pause");
-			system("cls");
-
-			cout << "Enter room number to search: ";
-			cin >> intkey;
-			SearchTree(Root, intkey);
 		}
 		system("pause");
 		printMenu(list, list_copy);
 		break;
 	case 5:
+		if (flag == true){}
+		else { cout << "Do the key search first!\n"; system("pause"); printMenu(list, list_copy); break; }
+		system("cls");
 
+		cout << "\n\tName info\t\t" << "  Street\t\t" << "House\t" << "Room\t" << "  Date" << endl << endl;
+		PrintTree(Root);
 
+		system("pause");
+		system("cls");
+
+		cout << "Enter first 3 letters of surname: ";
+		cin >> key;
+		SearchTree(Root, key);
+
+		system("pause");
+		printMenu(list, list_copy);
+		break;
 	case 6:
+		system("cls");
+
+		codingInteraction();
+
+		system("pause");
+		printMenu(list, list_copy);
+		break;
+	case 7:
 		system("cls");
 
 		cout << "Exiting the programm.." << endl;
